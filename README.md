@@ -1,2 +1,2 @@
-# wulacms_extension_cms
+# wulacms
 CMS扩展
