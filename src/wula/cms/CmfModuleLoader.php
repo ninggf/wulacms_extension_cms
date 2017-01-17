@@ -19,6 +19,10 @@ class CmfModuleLoader extends ModuleLoader {
 
 	public function isEnabled(Module $module) {
 		if (WULACMF_INSTALLED) {
+			if (!$module instanceof CmfModule) {
+				return false;
+			}
+
 			// TODO: 此处需要从数据进行检验
 			return true;
 		}

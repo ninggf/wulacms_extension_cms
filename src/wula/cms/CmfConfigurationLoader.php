@@ -17,6 +17,11 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 		//检测是否安装.
 		if (is_file(CONFIG_PATH . 'install.lock')) {
 			define('WULACMF_INSTALLED', true);
+			bind('artisan\getCommands', function ($cmds) {
+				$cmds['config'] = new ConfigureCommand();
+
+				return $cmds;
+			});
 		} else {
 			define('WULACMF_INSTALLED', false);
 		}
