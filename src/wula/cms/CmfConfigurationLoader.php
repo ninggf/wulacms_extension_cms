@@ -24,6 +24,11 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 			});
 		} else {
 			define('WULACMF_INSTALLED', false);
+			bind('artisan\getCommands', function ($cmds) {
+				$cmds['install'] = new InstallCommand();
+
+				return $cmds;
+			});
 		}
 	}
 }

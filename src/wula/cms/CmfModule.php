@@ -14,37 +14,6 @@ use wulaphp\app\Module;
 use wulaphp\db\DatabaseConnection;
 
 abstract class CmfModule extends Module {
-	protected $currentVersion;
-
-	/**
-	 * 当前版本.
-	 *
-	 * @return string
-	 */
-	public final function getCurrentVersion() {
-		return $this->currentVersion;
-	}
-
-	/**
-	 * 已经安装版本.
-	 *
-	 * @return string
-	 */
-	public function getInstalledVersion() {
-		return $this->currentVersion;
-	}
-
-	/**
-	 * 版本列表.
-	 *
-	 * @return array
-	 */
-	protected function getVersionList() {
-		$v ['1.0.0'] = 0;
-
-		return $v;
-	}
-
 	/**
 	 * 依赖.
 	 *
@@ -55,34 +24,95 @@ abstract class CmfModule extends Module {
 	}
 
 	/**
-	 * 运行环境检测.
-	 *
-	 * @return array
-	 */
-	public function getEnvCheckers() {
-		return [];
-	}
-
-	/**
 	 * 安装.
+	 *
+	 * @param DatabaseConnection $con
+	 * @param int                $kernel 1代表安装的是内核模块.
+	 *
 	 * @return bool
 	 */
-	public function install(DatabaseConnection $con) {
-		return true;
+	public final function install(DatabaseConnection $con, $kernel = 0) {
+		$rst = $this->upgrade($con, $this->currentVersion);
+		if ($rst) {
+			$data['name']        = $this->namespace;
+			$data['version']     = $this->currentVersion;
+			$data['create_time'] = $data['update_time'] = time();
+			$data['kernel']      = $kernel;
+			$rst                 = $con->insert($data)->into('module')->exec(true);
+		}
+
+		return $rst;
 	}
 
 	/**
 	 * 卸载.
 	 * @return bool
 	 */
-	public function uninstall() {
-		return true;
+	public final function uninstall() {
+		$rst = $this->onUninstall();
+		if ($rst) {
+
+		}
+
+		return $rst;
 	}
 
 	/**
+	 * @param DatabaseConnection $db
+	 * @param string             $toVer
+	 * @param string             $fromVer
+	 *
 	 * @return bool
 	 */
-	public function upgrade() {
+	public final function upgrade($db, $toVer, $fromVer = '0.0.0') {
+		$prev = $fromVer;
+		foreach ($this->getVersionList() as $ver => $func) {
+			if (version_compare($ver, $toVer, '<=') && version_compare($ver, $fromVer, '>')) {
+				$sqls = $this->getSchemaSQLs($ver, $prev);
+				if ($sqls) {
+					foreach ($sqls as $_sql) {
+						if (!$_sql) {
+							continue;
+						}
+						$_sql = (array)$_sql;
+						foreach ($_sql as $sql) {
+							$rst = $db->exec($sql);
+							if (!$rst) {
+								throw_exception($db->error);
+							}
+						}
+					}
+				}
+				if ($func && method_exists($this, $func)) {
+					$rst = $this->{$func}($db);
+					if (!$rst) {
+						return false;
+					}
+				}
+			}
+		}
+
 		return true;
+	}
+
+	protected function onUninstall() {
+		return true;
+	}
+
+	protected function getSchemaSQLs($toVer, $fromVer = '0.0.0') {
+		$sqls    = array();
+		$sqlFile = MODULES_PATH . $this->dirname . DS . 'schema.sql.php';
+		if (is_file($sqlFile)) {
+			include_once $sqlFile;
+			if (!empty ($tables)) {
+				foreach ($tables as $ver => $var) {
+					if (version_compare($ver, $toVer, '<=') && version_compare($ver, $fromVer, '>')) {
+						$sqls = array_merge($sqls, $var);
+					}
+				}
+			}
+		}
+
+		return $sqls;
 	}
 }
