@@ -26,6 +26,11 @@ class InstallCommand extends ArtisanCommand {
 	}
 
 	protected function execute($options) {
+		if (APPID == 'app1') {
+			$this->error('please run ' . $this->color->str('php artisan init', 'blue') . ' first!');
+
+			return 1;
+		}
 		$wulacms = $this->color->str('wulacms', 'red');
 		if (!$this->welcomeShow) {
 			define('SUPPORTPATH', dirname(dirname(dirname(__DIR__))) . DIRECTORY_SEPARATOR . 'tpl' . DS);
@@ -70,7 +75,7 @@ class InstallCommand extends ArtisanCommand {
 		} while (true);
 
 		$dashboard = $this->get('dashboard name [dashboard]', 'dashboard');
-		$password  = rand_str();
+		$password  = rand_str(15);
 
 		$this->log();
 		$this->log('setp 3: confirm');
@@ -165,13 +170,12 @@ class InstallCommand extends ArtisanCommand {
 		$this->log('step 7: create admin user');
 		$user['username'] = $username;
 		$user['nickname'] = '网站所有者';
-		$user['salt']     = rand_str(256);
-		$user['password'] = Passport::passwd($password, $user['salt']);
+		$user['hash']     = Passport::passwd($password);
 
 		$uid = $db->insert($user)->into('user')->exec();
 		$uid = $uid[0];
 
-		$db->insert(['user_id' => $uid, 'role_id' => 1])->into('user_role')->exec();
+		$db->insert([['user_id' => $uid, 'role_id' => 1], ['user_id' => $uid, 'role_id' => 2]], true)->into('user_role')->exec();
 		$this->log('  [' . $this->color->str('done', 'green') . ']');
 		// done
 		file_put_contents(CONFIG_PATH . 'install.lock', time());
