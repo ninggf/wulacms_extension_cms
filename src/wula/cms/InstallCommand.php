@@ -18,7 +18,7 @@ class InstallCommand extends ArtisanCommand {
 	private $welcomeShow = false;
 
 	public function cmd() {
-		return 'install';
+		return 'wulacms:install';
 	}
 
 	public function desc() {
@@ -175,7 +175,7 @@ class InstallCommand extends ArtisanCommand {
 		$uid = $db->insert($user)->into('user')->exec();
 		$uid = $uid[0];
 
-		$db->insert([['user_id' => $uid, 'role_id' => 1], ['user_id' => $uid, 'role_id' => 2]], true)->into('user_role')->exec();
+		$db->insert(['user_id' => $uid, 'role_id' => 2])->into('user_role')->exec();
 		$this->log('  [' . $this->color->str('done', 'green') . ']');
 		// done
 		file_put_contents(CONFIG_PATH . 'install.lock', time());
