@@ -12,6 +12,7 @@
 
 namespace wula\cms;
 
+use wulaphp\app\App;
 use wulaphp\app\Module;
 use wulaphp\app\ModuleLoader;
 
@@ -23,8 +24,16 @@ class CmfModuleLoader extends ModuleLoader {
 				return false;
 			}
 
-			// TODO: 此处需要从数据进行检验
-			return true;
+			$m = App::table('module')->get(['name' => $module->getNamespace()]);
+			if ($m['name']) {
+				$module->installed        = true;
+				$module->installedVersion = $m['version'];
+				$module->upgradable       = version_compare($module->getCurrentVersion(), $m['version'], '>');
+
+				return $m['status'] == 1;
+			}
+
+			return false;
 		}
 		$name = $module->getNamespace();
 		if ($name == 'core') {

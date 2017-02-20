@@ -150,7 +150,7 @@ class InstallCommand extends ArtisanCommand {
 					$this->log("  install " . $m . ' ... ', false);
 					$md = App::getModuleById($m);
 					if ($md) {
-						if ($md->install($db)) {
+						if ($md->install($db, 1)) {
 							$this->log('  [' . $this->color->str('done', 'green') . ']');
 						} else {
 							$this->log(' [' . $this->color->str('error', 'red') . ']');
