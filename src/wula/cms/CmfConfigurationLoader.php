@@ -34,4 +34,29 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 			});
 		}
 	}
+
+	public function loadConfig($name = 'default') {
+		$config = parent::loadConfig($name);
+		// TODO: 从(缓存->数据库)中加载配置.
+
+		return $config;
+	}
+
+	public function postLoad() {
+		parent::postLoad();
+		$enabledFeatures = $this->loadConfig('features@cms');
+		$features        = CmsFeatureManager::getFeatures();
+		if ($features) {
+			ksort($features);
+			foreach ($features as $fs) {
+				foreach ($fs as $f) {
+					$this->performFeature($f);
+				}
+			}
+		}
+	}
+
+	private function performFeature(ICmsFeature $feature) {
+
+	}
 }
