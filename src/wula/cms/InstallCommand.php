@@ -26,11 +26,6 @@ class InstallCommand extends ArtisanCommand {
 	}
 
 	protected function execute($options) {
-		if (APPID == 'app1') {
-			$this->error('please run ' . $this->color->str('php artisan init', 'blue') . ' first!');
-
-			return 1;
-		}
 		$wulacms = $this->color->str('wulacms', 'red');
 		if (!$this->welcomeShow) {
 			define('SUPPORTPATH', dirname(dirname(dirname(__DIR__))) . DIRECTORY_SEPARATOR . 'tpl' . DS);

@@ -19,9 +19,11 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 		if (is_file(CONFIG_PATH . 'install.lock')) {
 			define('WULACMF_INSTALLED', true);
 			bind('artisan\getCommands', function ($cmds) {
-				$cmds['config']       = new ConfigureCommand();
-				$cmds['create:table'] = new CreateTableCommand();
-				$cmds['module']       = new ModuleCommand();
+				$cmds['config'] = new ConfigureCommand();
+				if (APP_MODE == 'dev') {
+					$cmds['create:table'] = new CreateTableCommand();
+				}
+				$cmds['module'] = new ModuleCommand();
 
 				return $cmds;
 			});
@@ -37,6 +39,7 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 
 	public function loadConfig($name = 'default') {
 		$config = parent::loadConfig($name);
+
 		// TODO: 从(缓存->数据库)中加载配置.
 
 		return $config;
