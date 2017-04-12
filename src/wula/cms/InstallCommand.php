@@ -59,7 +59,7 @@ class InstallCommand extends ArtisanCommand {
 		$this->log('setp 2: site info');
 		$this->log('-----------------------------------------------');
 		$username = $this->get('username [admin]', 'admin');
-
+		$password = $this->get('password [random]', rand_str(15));
 		do {
 			$siteurl = $this->get('site url [/]', '/');
 			if (!preg_match('#^(/|https?://[^/]+/)$#', $siteurl)) {
@@ -70,7 +70,6 @@ class InstallCommand extends ArtisanCommand {
 		} while (true);
 
 		$dashboard = $this->get('dashboard name [dashboard]', 'dashboard');
-		$password  = rand_str(15);
 
 		$this->log();
 		$this->log('setp 3: confirm');
