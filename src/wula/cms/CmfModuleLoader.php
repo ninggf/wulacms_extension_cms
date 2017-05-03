@@ -29,8 +29,9 @@ class CmfModuleLoader extends ModuleLoader {
 				$module->installed        = true;
 				$module->installedVersion = $m['version'];
 				$module->upgradable       = version_compare($module->getCurrentVersion(), $m['version'], '>');
+				$module->enabled          = $m['status'] == 1;
 
-				return $m['status'] == 1;
+				return $module->enabled;
 			}
 
 			return false;
