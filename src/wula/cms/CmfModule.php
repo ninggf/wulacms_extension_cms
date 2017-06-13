@@ -66,7 +66,8 @@ abstract class CmfModule extends Module {
 	 */
 	public final function upgrade($db, $toVer, $fromVer = '0.0.0') {
 		$prev = $fromVer;
-		foreach ($this->getVersionList() as $ver => $func) {
+		foreach ($this->getVersionList() as $ver) {
+			$func = 'upgradeTo' . str_replace('.', '_', $ver);
 			if (version_compare($ver, $toVer, '<=') && version_compare($ver, $fromVer, '>')) {
 				$sqls = $this->getSchemaSQLs($ver, $prev);
 				if ($sqls) {
