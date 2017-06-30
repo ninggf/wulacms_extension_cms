@@ -23,7 +23,7 @@ class ModuleCommand extends ArtisanCommand {
 	}
 
 	protected function getOpts() {
-		return ['e' => 'list enabled modules only', 'a' => 'list available modules', 'i' => 'list installed modules', 'd' => 'list disabled modules'];
+		return ['e' => 'list enabled modules only', 'a' => 'list available modules', 'i' => 'list installed modules', 'd' => 'list disabled modules', 'u' => 'list upgradable modules'];
 	}
 
 	protected function execute($options) {
@@ -54,13 +54,22 @@ class ModuleCommand extends ArtisanCommand {
 			if (empty($options)) {
 				$options['e'] = true;
 			}
-			$modules = App::modules();
+			if ($options['e']) {
+				$modules = App::modules('enabled');
+			} else if ($options['i']) {
+				$modules = App::modules('installed');
+			} else if ($options['d']) {
+				$modules = App::modules('disabled');
+			} else if ($options['u']) {
+				$modules = App::modules('upgradable');
+			} else {
+				$modules = App::modules('uninstalled');
+			}
+
 			/** @var CmfModule $module */
 			foreach ($modules as $module) {
-				if (($options['e'] && $module->enabled) || ($options['i'] && $module->installed) || ($options['d'] && !$module->enabled && $module->installed) || ($options['a'] && !$module->installed)) {
-					$this->log(str_pad($module->getNamespace() . ' [' . $module->getCurrentVersion() . ']', 32, ' ', STR_PAD_RIGHT), false);
-					$this->log($module->getName() . ' : ' . $module->getDescription());
-				}
+				$this->log(str_pad($module->getNamespace() . ' [' . $module->getCurrentVersion() . ']', 32, ' ', STR_PAD_RIGHT), false);
+				$this->log($module->getName() . ' : ' . $module->getDescription());
 			}
 		} else if ($cmd == 'install') {
 			try {
