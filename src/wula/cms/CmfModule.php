@@ -10,6 +10,7 @@
 
 namespace wula\cms;
 
+use wulaphp\app\App;
 use wulaphp\app\Module;
 use wulaphp\db\DatabaseConnection;
 
@@ -32,13 +33,17 @@ abstract class CmfModule extends Module {
 	 * @return bool
 	 */
 	public final function install(DatabaseConnection $con, $kernel = 0) {
-		$rst = $this->upgrade($con, $this->currentVersion);
+		if ($con->select('id')->from('{module}')->where(['name' => $this->namespace])->exist('id')) {
+			return false;
+		}
+		$data['name']        = $this->namespace;
+		$data['version']     = $this->currentVersion;
+		$data['create_time'] = $data['update_time'] = time();
+		$data['kernel']      = $kernel;
+		$rst                 = $con->insert($data)->into('{module}')->exec(true);
+
 		if ($rst) {
-			$data['name']        = $this->namespace;
-			$data['version']     = $this->currentVersion;
-			$data['create_time'] = $data['update_time'] = time();
-			$data['kernel']      = $kernel;
-			$rst                 = $con->insert($data)->into('module')->exec(true);
+			$rst = $this->upgrade($con, $this->currentVersion);
 		}
 
 		return $rst;
@@ -49,9 +54,25 @@ abstract class CmfModule extends Module {
 	 * @return bool
 	 */
 	public final function uninstall() {
+		if (!App::db()->select('id')->from('{module}')->where(['name' => $this->namespace])->exist('id')) {
+			return false;
+		}
 		$rst = $this->onUninstall();
 		if ($rst) {
-
+			$db     = App::db();
+			$tables = $this->getDefinedTables($db->getDialect());
+			if ($tables ['tables']) {
+				foreach ($tables ['tables'] as $table) {
+					$db->exec('DROP TABLE IF EXISTS ' . $table);
+				}
+			}
+			if ($tables ['views']) {
+				foreach ($tables ['views'] as $table) {
+					$db->exec('DROP VIEW IF EXISTS ' . $table);
+				}
+			}
+			$db->delete()->from('{module}')->where(['name' => $this->namespace])->exec();
+			App::cfg();
 		}
 
 		return $rst;
@@ -65,18 +86,24 @@ abstract class CmfModule extends Module {
 	 * @return bool
 	 */
 	public final function upgrade($db, $toVer, $fromVer = '0.0.0') {
+		if ($fromVer != '0.0.0' && !App::db()->select('id')->from('{module}')->where(['name' => $this->namespace])->exist('id')) {
+			return false;
+		}
 		$prev = $fromVer;
-		foreach ($this->getVersionList() as $ver) {
+		foreach ($this->getVersionList() as $ver => $chang) {
 			$func = 'upgradeTo' . str_replace('.', '_', $ver);
 			if (version_compare($ver, $toVer, '<=') && version_compare($ver, $fromVer, '>')) {
 				$sqls = $this->getSchemaSQLs($ver, $prev);
 				if ($sqls) {
+					$sr = ['{prefix}', '{encoding}'];
+					$rp = [$db->getDialect()->getTablePrefix(), $db->getDialect()->getCharset()];
 					foreach ($sqls as $_sql) {
 						if (!$_sql) {
 							continue;
 						}
 						$_sql = (array)$_sql;
 						foreach ($_sql as $sql) {
+							$sql = str_replace($sr, $rp, $sql);
 							$rst = $db->exec($sql);
 							if (!$rst) {
 								throw_exception($db->error);
@@ -104,7 +131,8 @@ abstract class CmfModule extends Module {
 		$sqls    = array();
 		$sqlFile = MODULES_PATH . $this->dirname . DS . 'schema.sql.php';
 		if (is_file($sqlFile)) {
-			include_once $sqlFile;
+			$tables = [];
+			@include_once $sqlFile;
 			if (!empty ($tables)) {
 				foreach ($tables as $ver => $var) {
 					if (version_compare($ver, $toVer, '<=') && version_compare($ver, $fromVer, '>')) {
@@ -115,5 +143,23 @@ abstract class CmfModule extends Module {
 		}
 
 		return $sqls;
+	}
+
+	/**
+	 * 取当前模板所定义的表.
+	 *
+	 * @param \wulaphp\db\dialect\DatabaseDialect $dialect
+	 *
+	 * @return array
+	 */
+	public function getDefinedTables($dialect) {
+		$sqlFile = MODULES_PATH . $this->dirname . DS . 'schema.sql.php';
+		if (is_file($sqlFile)) {
+			$file = file_get_contents($sqlFile);
+
+			return $dialect->getTablesFromSQL($file);
+		}
+
+		return array();
 	}
 }

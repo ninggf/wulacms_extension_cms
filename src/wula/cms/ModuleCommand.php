@@ -68,14 +68,15 @@ class ModuleCommand extends ArtisanCommand {
 
 			/** @var CmfModule $module */
 			foreach ($modules as $module) {
-				$this->log(str_pad($module->getNamespace() . ' [' . $module->getCurrentVersion() . ']', 32, ' ', STR_PAD_RIGHT), false);
-				$this->log($module->getName() . ' : ' . $module->getDescription());
+				echo(str_pad($module->getNamespace() . ' [' . $module->getCurrentVersion() . ']', 32, ' ', STR_PAD_RIGHT));
+				echo($module->getName() . ' : ' . $module->getDescription());
+				echo "\n";
 			}
 		} else if ($cmd == 'install') {
 			try {
 				/** @var CmfModule $modulex */
 				if ($modulex->install(App::db())) {
-					$this->success($module . ' installed successfully!');
+					$this->success($this->color->str($module, 'blue') . ' installed successfully!');
 				} else {
 					$this->error('cannot install module : ' . $module);
 				}
@@ -100,6 +101,17 @@ class ModuleCommand extends ArtisanCommand {
 				}
 			} catch (\Exception $e) {
 				$this->error($e->getMessage());
+			}
+		} else if ($cmd == 'uninstall') {
+			try {
+				/** @var CmfModule $modulex */
+				if ($modulex->uninstall()) {
+					$this->success('module ' . $this->color->str($module, 'blue') . ' uninstalled!');
+				} else {
+					$this->error('cannot uninstall module : ' . $module);
+				}
+			} catch (\Exception $e) {
+				$this->error('cannot uninstall module : ' . $module . ' for ' . $e->getMessage());
 			}
 		} else {
 			$this->help('unkown command:' . $this->color->str($cmd));
