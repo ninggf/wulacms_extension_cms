@@ -36,16 +36,14 @@ abstract class CmfModule extends Module {
 		if ($con->select('id')->from('{module}')->where(['name' => $this->namespace])->exist('id')) {
 			return false;
 		}
-		$data['name']        = $this->namespace;
-		$data['version']     = $this->currentVersion;
-		$data['create_time'] = $data['update_time'] = time();
-		$data['kernel']      = $kernel;
-		$rst                 = $con->insert($data)->into('{module}')->exec(true);
-
+		$rst = $this->upgrade($con, $this->currentVersion);
 		if ($rst) {
-			$rst = $this->upgrade($con, $this->currentVersion);
+			$data['name']        = $this->namespace;
+			$data['version']     = $this->currentVersion;
+			$data['create_time'] = $data['update_time'] = time();
+			$data['kernel']      = $kernel;
+			$rst                 = $con->insert($data)->into('{module}')->exec(true);
 		}
-
 		return $rst;
 	}
 
@@ -86,7 +84,7 @@ abstract class CmfModule extends Module {
 	 * @return bool
 	 */
 	public final function upgrade($db, $toVer, $fromVer = '0.0.0') {
-		if ($fromVer != '0.0.0' && !App::db()->select('id')->from('{module}')->where(['name' => $this->namespace])->exist('id')) {
+		if ($fromVer !== '0.0.0' && !$db->select('id')->from('{module}')->where(['name' => $this->namespace])->exist('id')) {
 			return false;
 		}
 		$prev = $fromVer;

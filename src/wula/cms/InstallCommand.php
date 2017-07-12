@@ -129,6 +129,7 @@ class InstallCommand extends ArtisanCommand {
 		$this->log('step 5: install modules');
 		$siteConfig = include CONFIG_PATH . 'config.php';
 		$dbconfig   = include CONFIG_PATH . 'dbconfig.php';
+
 		try {
 			$dbc = $dbconfig->toArray();
 			$db  = App::db($dbc);
@@ -136,7 +137,6 @@ class InstallCommand extends ArtisanCommand {
 			if ($db == null) {
 				throw_exception('Cannot connect to the database');
 			}
-
 			if (isset($siteConfig['modules'])) {
 				$modules = $siteConfig['modules'];
 
