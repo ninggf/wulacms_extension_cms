@@ -15,6 +15,8 @@ use wulaphp\app\Module;
 use wulaphp\db\DatabaseConnection;
 
 abstract class CmfModule extends Module {
+	public $isKernel = false;
+
 	/**
 	 * 依赖.
 	 *
@@ -44,6 +46,7 @@ abstract class CmfModule extends Module {
 			$data['kernel']      = $kernel;
 			$rst                 = $con->insert($data)->into('{module}')->exec(true);
 		}
+
 		return $rst;
 	}
 
@@ -74,6 +77,31 @@ abstract class CmfModule extends Module {
 		}
 
 		return $rst;
+	}
+
+	public final function stop() {
+		if (!App::db()->select('id')->from('{module}')->where(['name' => $this->namespace])->exist('id')) {
+			return false;
+		}
+
+		App:: db()->update('{module}')->set(['status' => 0])->where([
+			'name'   => $this->namespace,
+			'kernel' => 0
+		])->exec();
+
+		return true;
+	}
+
+	public final function start() {
+		if (!App::db()->select('id')->from('{module}')->where(['name' => $this->namespace])->exist('id')) {
+			return false;
+		}
+
+		App:: db()->update('{module}')->set(['status' => 1])->where([
+			'name' => $this->namespace
+		])->exec();
+
+		return true;
 	}
 
 	/**
@@ -118,6 +146,10 @@ abstract class CmfModule extends Module {
 			}
 		}
 
+		if ($fromVer != '0.0.0') {
+			$db->update('{module}')->set(['version' => $toVer])->where(['name' => $this->namespace])->exec();
+		}
+
 		return true;
 	}
 
@@ -126,7 +158,7 @@ abstract class CmfModule extends Module {
 	}
 
 	protected function getSchemaSQLs($toVer, $fromVer = '0.0.0') {
-		$sqls    = array();
+		$sqls    = [];
 		$sqlFile = MODULES_PATH . $this->dirname . DS . 'schema.sql.php';
 		if (is_file($sqlFile)) {
 			$tables = [];
@@ -158,6 +190,6 @@ abstract class CmfModule extends Module {
 			return $dialect->getTablesFromSQL($file);
 		}
 
-		return array();
+		return [];
 	}
 }

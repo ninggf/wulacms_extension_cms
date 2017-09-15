@@ -10,7 +10,6 @@
 
 namespace wula\cms;
 
-use wulaphp\command\CreateTableCommand;
 use wulaphp\conf\ConfigurationLoader;
 
 class CmfConfigurationLoader extends ConfigurationLoader {
@@ -20,10 +19,6 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 			define('WULACMF_INSTALLED', true);
 			bind('artisan\getCommands', function ($cmds) {
 				$cmds['config'] = new ConfigureCommand();
-				if (APP_MODE == 'dev') {
-					$cmds['create:table'] = new CreateTableCommand();
-				}
-				$cmds['module'] = new ModuleCommand();
 
 				return $cmds;
 			});

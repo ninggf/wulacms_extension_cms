@@ -30,6 +30,7 @@ class CmfModuleLoader extends ModuleLoader {
 				$module->installedVersion = $m['version'];
 				$module->upgradable       = version_compare($module->getCurrentVersion(), $m['version'], '>');
 				$module->enabled          = $m['status'] == 1;
+				$module->isKernel         = $m['kernel'] == 1;
 
 				return $module->enabled;
 			}
