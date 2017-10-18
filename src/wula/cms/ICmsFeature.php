@@ -19,9 +19,5 @@ interface ICmsFeature {
 
 	function getId();
 
-	function getName();
-
-	function getDescription();
-
 	function perform();
 }

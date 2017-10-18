@@ -10,6 +10,8 @@
 
 namespace wula\cms;
 
+use wulaphp\app\App;
+use wulaphp\cache\RtCache;
 use wulaphp\conf\ConfigurationLoader;
 
 class CmfConfigurationLoader extends ConfigurationLoader {
@@ -17,11 +19,6 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 		//检测是否安装.
 		if (is_file(CONFIG_PATH . 'install.lock')) {
 			define('WULACMF_INSTALLED', true);
-			bind('artisan\getCommands', function ($cmds) {
-				$cmds['config'] = new ConfigureCommand();
-
-				return $cmds;
-			});
 		} else {
 			define('WULACMF_INSTALLED', false);
 			bind('artisan\getCommands', function ($cmds) {
@@ -33,28 +30,38 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 	}
 
 	public function loadConfig($name = 'default') {
+		//优化从文件加载
 		$config = parent::loadConfig($name);
-
-		// TODO: 从(缓存->数据库)中加载配置.
+		//从缓存加载
+		$setting = RtCache::get('cfg.' . $name);
+		if ($setting === null) {
+			//从数据库加载
+			$setting = App::table('settings')->find(['group' => $name], 'name,value')->toArray('value', 'name');
+			RtCache::add('cfg.' . $name, $setting);
+		}
+		if ($setting) {
+			$config->setConfigs($setting);
+		}
 
 		return $config;
 	}
 
 	public function postLoad() {
 		parent::postLoad();
-		$enabledFeatures = $this->loadConfig('features@cms');
-		$features        = CmsFeatureManager::getFeatures();
+		$features = CmsFeatureManager::getFeatures();
 		if ($features) {
 			ksort($features);
+			$rst = [];
 			foreach ($features as $fs) {
+				/**@var \wula\cms\ICmsFeature $f */
 				foreach ($fs as $f) {
-					$this->performFeature($f);
+					$rst[] = $f->perform() === false ? 0 : 1;
 				}
 			}
+
+			if ($rst && !array_product($rst)) {//有特性要求停止运行（返回了false）
+				exit ();
+			}
 		}
-	}
-
-	private function performFeature(ICmsFeature $feature) {
-
 	}
 }
