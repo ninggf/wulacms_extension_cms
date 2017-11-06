@@ -13,6 +13,7 @@ namespace wula\cms;
 use wulaphp\app\App;
 use wulaphp\artisan\ArtisanCommand;
 use wulaphp\auth\Passport;
+use wulaphp\db\dialect\DatabaseDialect;
 
 class InstallCommand extends ArtisanCommand {
 	private $welcomeShow = false;
@@ -38,7 +39,12 @@ class InstallCommand extends ArtisanCommand {
 		}
 
 		$this->log();
-		$this->log('setp 1: database');
+		$this->log('setp 1: environment');
+		$this->log('-----------------------------------------------');
+		$env = $this->get('environment [dev]', 'dev');
+
+		$this->log();
+		$this->log('setp 2: database');
 		$this->log('-----------------------------------------------');
 		$dbhost = $this->get('host [localhost]', 'localhost');
 
@@ -56,24 +62,17 @@ class InstallCommand extends ArtisanCommand {
 		$dbuser    = $this->get('username [root]', 'root');
 		$dbpwd     = $this->get('password');
 		$this->log();
-		$this->log('setp 2: site info');
+		$this->log('setp 3: site info');
 		$this->log('-----------------------------------------------');
-		$username = $this->get('username [admin]', 'admin');
-		$password = $this->get('password [random]', rand_str(15));
-		do {
-			$siteurl = $this->get('site url [/]', '/');
-			if (!preg_match('#^(/|https?://[^/]+/)$#', $siteurl)) {
-				$this->log("\t" . $this->color->str('invalid site url, / or start with http and end with /', null, 'red'));
-			} else {
-				break;
-			}
-		} while (true);
-
-		$dashboard = $this->get('dashboard name [dashboard]', 'dashboard');
+		$username  = $this->get('username [admin]', 'admin');
+		$password  = $this->get('password [random]', rand_str(15));
+		$domain    = $this->get('domain []', '');
+		$dashboard = $this->get('dashboard name [backend]', 'backend');
 
 		$this->log();
-		$this->log('setp 3: confirm');
+		$this->log('setp 4: confirm');
 		$this->log('-----------------------------------------------');
+		$this->log('environment: ' . $env);
 		$this->log('database info:');
 		$this->log("\tserver  : " . $this->color->str($dbhost . ':' . $dbport, 'blue'));
 		$this->log("\tdatabase: " . $this->color->str(str_pad($dbname, 20, ' ', STR_PAD_RIGHT), 'blue') . ' charset : ' . $this->color->str($dbcharset, 'blue'));
@@ -82,9 +81,8 @@ class InstallCommand extends ArtisanCommand {
 		$this->log();
 		$this->log('admin and dashboard:');
 		$this->log("\tadmin    : " . $this->color->str($username, 'blue'));
-		$this->log("\tsite url : " . $this->color->str($siteurl, 'blue'));
 		$this->log("\tdashboard: " . $this->color->str($dashboard, 'blue'));
-
+		$this->log("\tdomain:" . $this->color->str($domain, 'blue'));
 		$this->log();
 		$confirm = strtoupper($this->get('is that correct? [Y/n]', 'Y'));
 		if ($confirm !== 'Y') {
@@ -92,7 +90,22 @@ class InstallCommand extends ArtisanCommand {
 		}
 		// install database
 		$this->log();
-		$this->log('step 4: create configuration files');
+		$this->log('step 5: create configuration files');
+		$cfg = CONFIG_PATH . 'install_config.php';
+		if (is_file($cfg)) {
+			$dbconfig         = file_get_contents($cfg);
+			$r['{dashboard}'] = $dashboard;
+			$r['{domain}']    = $domain;
+			$r['{name}']      = '';
+			$this->log('  create config.php ...', false);
+			$dbconfig = str_replace(array_keys($r), array_values($r), $dbconfig);
+			if (!@file_put_contents(CONFIG_PATH . 'config.php', $dbconfig)) {
+				$this->error('cannot save configuration file ' . CONFIG_PATH . 'config.php');
+
+				return 1;
+			}
+			$this->log('  [' . $this->color->str('done', 'green') . ']');
+		}
 		$dbconfig           = file_get_contents(SUPPORTPATH . 'dbconfig.php');
 		$r['{db.host}']     = $dbhost;
 		$r['{db.port}']     = $dbport;
@@ -109,80 +122,101 @@ class InstallCommand extends ArtisanCommand {
 		} else {
 			$this->log('  [' . $this->color->str('done', 'green') . ']');
 		}
-
-		$cfg = CONFIG_PATH . 'install_config.php';
-		if (is_file($cfg)) {
-			$dbconfig         = file_get_contents($cfg);
-			$r['{dashboard}'] = $dashboard;
-			$r['{url}']       = $siteurl;
-			$this->log('  create config.php ...', false);
-			$dbconfig = str_replace(array_keys($r), array_values($r), $dbconfig);
-			if (!@file_put_contents(CONFIG_PATH . 'config.php', $dbconfig)) {
-				$this->error('cannot save configuration file ' . CONFIG_PATH . 'config.php');
+		if ($env != 'pro') {
+			$dcf[] = '[app]';
+			$dcf[] = 'debug = DEBUG_DEBUG';
+			$dcf[] = 'dashboard = ' . $dashboard;
+			$dcf[] = 'domain = ' . $domain;
+			$dcf[] = '';
+			$dcf[] = '[db]';
+			$dcf[] = 'db.host = ' . $dbhost;
+			$dcf[] = 'db.port = ' . $dbport;
+			$dcf[] = 'db.name = ' . $dbname;
+			$dcf[] = 'db.user = ' . $dbuser;
+			$dcf[] = 'db.password = ' . $dbpwd;
+			$dcf[] = 'db.charset = ' . $dbcharset;
+			if (!@file_put_contents(CONFIG_PATH . '.env', implode("\n", $dcf))) {
+				$this->error('cannot save .env file ');
 
 				return 1;
 			}
-			$this->log('  [' . $this->color->str('done', 'green') . ']');
 		}
-		// install modules
-		$this->log();
-		$this->log('step 5: install modules');
-		$siteConfig = include CONFIG_PATH . 'config.php';
 		$dbconfig   = include CONFIG_PATH . 'dbconfig.php';
-
+		$siteConfig = include CONFIG_PATH . 'install_config.php';
 		try {
+			// install modules
+			$this->log();
+			$this->log('step 6: install modules');
 			$dbc = $dbconfig->toArray();
-			$db  = App::db($dbc);
+			unset($dbc['dbname']);
+			$dialect = DatabaseDialect::getDialect($dbc);
 
+			$dbs = $dialect->listDatabases();
+			$rst = in_array($dbname, $dbs);
+			if (!$rst) {
+				$rst = $dialect->createDatabase($dbname, $dbcharset);
+			}
+			if (!$rst) {
+				throw_exception('Cannot create the database ' . $dbname);
+			}
+			$db = App::db($dbconfig);
 			if ($db == null) {
 				throw_exception('Cannot connect to the database');
 			}
+			$modules = ['core', 'dashboard', 'media', 'site', 'model', 'page'];
 			if (isset($siteConfig['modules'])) {
-				$modules = $siteConfig['modules'];
+				$modules = array_merge($modules, (array)$siteConfig['modules']);
+			}
 
-				foreach ($modules as $m) {
-					$this->log("  install " . $m . ' ... ', false);
-					$md = App::getModuleById($m);
-					if ($md) {
-						if ($md->install($db, 1)) {
-							$this->log('  [' . $this->color->str('done', 'green') . ']');
-						} else {
-							$this->log(' [' . $this->color->str('error', 'red') . ']');
-						}
+			foreach ($modules as $m) {
+				$this->log("  install " . $m . ' ... ', false);
+				$md = App::getModuleById($m);
+				if ($md) {
+					if ($md->install($db, true)) {
+						$this->log('  [' . $this->color->str('done', 'green') . ']');
 					} else {
 						$this->log(' [' . $this->color->str('error', 'red') . ']');
 					}
+				} else {
+					$this->log(' [' . $this->color->str('error', 'red') . ']');
 				}
 			}
 		} catch (\Exception $e) {
 			$this->error($e->getMessage());
+			@unlink(CONFIG_PATH . '.env');
+			@unlink(CONFIG_PATH . 'config.php');
+			@unlink(CONFIG_PATH . 'dbconfig.php');
 
 			return 1;
 		}
 		// create admin
 		$this->log();
 		$this->log('step 7: create admin user');
+		$user['id']       = 1;
 		$user['username'] = $username;
 		$user['nickname'] = '网站所有者';
 		$user['hash']     = Passport::passwd($password);
 
-		$uid = $db->insert($user)->into('user')->exec();
-		$uid = $uid[0];
+		$db->insert($user)->into('user')->exec();
 
 		$db->insert([
-			['user_id' => $uid, 'role_id' => 1],
-			['user_id' => $uid, 'role_id' => 2]
+			['user_id' => 1, 'role_id' => 1],
+			['user_id' => 1, 'role_id' => 2]
 		], true)->into('{user_role}')->exec();
 
 		$this->log('  [' . $this->color->str('done', 'green') . ']');
 		// done
 		file_put_contents(CONFIG_PATH . 'install.lock', time());
 		$this->log();
-		$this->log('step 7: Congratulation');
+		$this->log('done: Congratulation');
 
 		$this->log('Your admin password is:');
 		$this->log($this->color->str($password, 'green'));
-		$this->log('Please goto ' . $this->color->str(trailingslashit($siteurl) . $dashboard, 'blue') . ', enjoy your ' . $wulacms . ' please!');
+		if ($domain) {
+			$this->log('Please goto ' . $this->color->str('http://' . $domain . '/' . $dashboard, 'blue') . ', enjoy your ' . $wulacms . ' please!');
+		} else {
+			$this->log('Please goto ' . $this->color->str('/' . $dashboard, 'blue') . ', enjoy your ' . $wulacms . ' please!');
+		}
 		$this->log();
 
 		return 0;

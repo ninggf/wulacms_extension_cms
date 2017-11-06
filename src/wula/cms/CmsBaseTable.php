@@ -9,17 +9,14 @@
  */
 
 namespace wula\cms;
+
+use wulaphp\db\Table;
+
 /**
- * CMS特性.
+ * 所有CMS相关表的基类.
  *
  * @package wula\cms
  */
-interface ICmsFeature {
-	function getPriority();
+class CmsBaseTable extends Table {
 
-	function getId();
-
-	function perform($url);
-
-	function postPerform($url);
 }

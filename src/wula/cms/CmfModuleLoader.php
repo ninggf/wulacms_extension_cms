@@ -15,17 +15,38 @@ namespace wula\cms;
 use wulaphp\app\App;
 use wulaphp\app\Module;
 use wulaphp\app\ModuleLoader;
+use wulaphp\cache\RtCache;
 
 class CmfModuleLoader extends ModuleLoader {
+	private $modules;
+
+	public function __construct() {
+		if (WULACMF_INSTALLED) {
+			$ms = RtCache::get('modules@cmf');
+			if ($ms) {
+				$this->modules = $ms;
+			} else {
+				$mt  = App::table('module');
+				$mts = $mt->findAll(null, 'name,version,status,kernel');
+				$ms  = [];
+				foreach ($mts->toArray() as $m) {
+					$ms[ $m['name'] ] = $m;
+				}
+				$this->modules = $ms;
+				RtCache::add('modules@cmf', $ms);
+				unset($mt);
+			}
+		}
+	}
 
 	public function isEnabled(Module $module) {
 		if (WULACMF_INSTALLED) {
 			if (!$module instanceof CmfModule) {
 				return false;
 			}
-
-			$m = App::table('module')->get(['name' => $module->getNamespace()]);
-			if ($m['name']) {
+			$name = $module->getNamespace();
+			if (isset($this->modules[ $name ])) {
+				$m                        = $this->modules[ $name ];
 				$module->installed        = true;
 				$module->installedVersion = $m['version'];
 				$module->upgradable       = version_compare($module->getCurrentVersion(), $m['version'], '>');
@@ -36,10 +57,11 @@ class CmfModuleLoader extends ModuleLoader {
 			}
 
 			return false;
-		}
-		$name = $module->getNamespace();
-		if ($name == 'core') {
-			return true;
+		} else {
+			$name = $module->getNamespace();
+			if ($name == 'core') {
+				return true;
+			}
 		}
 
 		return false;

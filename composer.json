@@ -19,7 +19,10 @@
   "autoload": {
 	"psr-0": {
 	  "wula\\cms\\": "src/"
-	}
+	},
+	"files": [
+	  "cms-support.php"
+	]
   },
   "support": {
 	"issues": "https://github.com/ninggf/wulacms_extension_cms/issues"

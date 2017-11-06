@@ -36,7 +36,7 @@ abstract class CmfModule extends Module {
 	 */
 	public final function install(DatabaseConnection $con, $kernel = 0) {
 		if ($con->select('id')->from('{module}')->where(['name' => $this->namespace])->exist('id')) {
-			return false;
+			return true;
 		}
 		$rst = $this->upgrade($con, $this->currentVersion);
 		if ($rst) {
@@ -165,14 +165,89 @@ abstract class CmfModule extends Module {
 			@include_once $sqlFile;
 			if (!empty ($tables)) {
 				foreach ($tables as $ver => $var) {
-					if (version_compare($ver, $toVer, '<=') && version_compare($ver, $fromVer, '>')) {
-						$sqls = array_merge($sqls, $var);
+					if ($var && version_compare($ver, $toVer, '<=') && version_compare($ver, $fromVer, '>')) {
+						$sqls = array_merge($sqls, (array)$var);
 					}
 				}
 			}
 		}
 
 		return $sqls;
+	}
+
+	public function envCheck(&$envs) {
+
+	}
+
+	/**
+	 * 检测文件权限.
+	 *
+	 * @param string $f 文件路径.
+	 * @param bool   $r 读
+	 * @param bool   $w 写
+	 *
+	 * @return array ['required'=>'','checked'=>'','pass'=>'']
+	 */
+	public final static function checkFile($f, $r = true, $w = true) {
+		$rst     = [];
+		$checked = $required = '';
+		if ($r) {
+			$required .= '可读';
+		}
+		if ($w) {
+			$required .= '可写';
+		}
+		if (file_exists($f)) {
+			if ($r) {
+				$checked = is_readable($f) ? '可读' : '不可读';
+			}
+			if ($w) {
+				if (is_dir($f)) {
+					$len = @file_put_contents($f . '/test.dat', 'test');
+					if ($len > 0) {
+						@unlink($f . '/test.dat');
+						$checked .= '可写';
+					} else {
+						$checked .= '不可写';
+					}
+				} else {
+					$checked .= is_writable($f) ? '可写' : '不可写';
+				}
+			}
+		} else {
+			$checked = '不存在';
+		}
+		$rst ['required'] = $required;
+		$rst ['checked']  = $checked;
+		$rst ['pass']     = $checked == $required;
+		$rst ['optional'] = false;
+
+		return $rst;
+	}
+
+	/**
+	 * 检测ini配置是否开启.
+	 *
+	 * @param string $key
+	 * @param int    $r
+	 * @param bool   $optional
+	 *
+	 * @return array ['required'=>'','checked'=>'','pass'=>'']
+	 */
+	public final static function checkEnv($key, $r, $optional = false) {
+		$rst = [];
+		$rel = strtolower(ini_get($key));
+		$rel = ($rel == '0' || $rel == 'off' || $rel == '') ? 0 : 1;
+		if ($rel == $r) {
+			$rst['pass'] = true;
+		} else {
+			$rst['pass'] = false;
+		}
+		$rst['required'] = $r ? '开' : '关';
+		$rst['checked']  = $rel ? '开' : '关';
+		$rst['optional'] = $optional;
+
+		return $rst;
 	}
 
 	/**

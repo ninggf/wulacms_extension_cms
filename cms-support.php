@@ -8,18 +8,4 @@
  * file that was distributed with this source code.
  */
 
-namespace wula\cms;
-/**
- * CMS特性.
- *
- * @package wula\cms
- */
-interface ICmsFeature {
-	function getPriority();
-
-	function getId();
-
-	function perform($url);
-
-	function postPerform($url);
-}
+\wula\cms\Storage::registerDriver('file', '\wula\cms\LocaleStorage');

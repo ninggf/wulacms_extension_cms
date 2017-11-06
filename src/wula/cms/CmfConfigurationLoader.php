@@ -10,9 +10,13 @@
 
 namespace wula\cms;
 
+use wula\cms\feature\CacheFeature;
+use wula\cms\feature\LimitFeature;
 use wulaphp\app\App;
 use wulaphp\cache\RtCache;
 use wulaphp\conf\ConfigurationLoader;
+use wulaphp\io\Response;
+use wulaphp\router\Router;
 
 class CmfConfigurationLoader extends ConfigurationLoader {
 	public function __construct() {
@@ -21,46 +25,67 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 			define('WULACMF_INSTALLED', true);
 		} else {
 			define('WULACMF_INSTALLED', false);
-			bind('artisan\getCommands', function ($cmds) {
-				$cmds['wulacms:install'] = new InstallCommand();
+			if (!defined('WULACMF_WEB_INSTALLER')) {
+				bind('artisan\getCommands', function ($cmds) {
+					$cmds['wulacms:install'] = new InstallCommand();
 
-				return $cmds;
-			});
+					return $cmds;
+				});
+			}
 		}
 	}
 
 	public function loadConfig($name = 'default') {
 		//优化从文件加载
 		$config = parent::loadConfig($name);
-		//从缓存加载
-		$setting = RtCache::get('cfg.' . $name);
-		if ($setting === null) {
-			//从数据库加载
-			$setting = App::table('settings')->find(['group' => $name], 'name,value')->toArray('value', 'name');
-			RtCache::add('cfg.' . $name, $setting);
-		}
-		if ($setting) {
-			$config->setConfigs($setting);
+		if (WULACMF_INSTALLED) {
+			//从缓存加载
+			$setting = RtCache::get('cfg.' . $name);
+			if ($setting === null) {
+				//从数据库加载
+				$setting = App::table('settings')->find(['group' => $name], 'name,value')->toArray('value', 'name');
+				RtCache::add('cfg.' . $name, $setting);
+			}
+			if ($setting) {
+				$config->setConfigs($setting);
+			}
 		}
 
 		return $config;
 	}
 
-	public function postLoad() {
-		parent::postLoad();
+	public function beforeLoad() {
+		CmsFeatureManager::register(new CacheFeature());
+		CmsFeatureManager::register(new LimitFeature());
 		$features = CmsFeatureManager::getFeatures();
 		if ($features) {
 			ksort($features);
 			$rst = [];
+			$url = Router::getFullURI();
 			foreach ($features as $fs) {
 				/**@var \wula\cms\ICmsFeature $f */
 				foreach ($fs as $f) {
-					$rst[] = $f->perform() === false ? 0 : 1;
+					$rst[] = $f->perform($url) === false ? 0 : 1;
 				}
 			}
 
 			if ($rst && !array_product($rst)) {//有特性要求停止运行（返回了false）
-				exit ();
+				Response::respond(403);
+			}
+		}
+	}
+
+	public function postLoad() {
+		CmsFeatureManager::register(new CacheFeature());
+		$features = CmsFeatureManager::getFeatures();
+		if ($features) {
+			ksort($features);
+			$url = Router::getFullURI();
+			foreach ($features as $fs) {
+				/**@var \wula\cms\ICmsFeature $f */
+				foreach ($fs as $f) {
+					$f->postPerform($url);
+				}
 			}
 		}
 	}
