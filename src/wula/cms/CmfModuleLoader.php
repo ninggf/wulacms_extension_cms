@@ -39,6 +39,11 @@ class CmfModuleLoader extends ModuleLoader {
 		}
 	}
 
+	/**
+	 * @param \wulaphp\app\Module $module
+	 *
+	 * @return bool
+	 */
 	public function isEnabled(Module $module) {
 		if (WULACMF_INSTALLED) {
 			if (!$module instanceof CmfModule) {

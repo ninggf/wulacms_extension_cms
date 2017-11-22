@@ -120,6 +120,7 @@ abstract class CmfModule extends Module {
 			$func = 'upgradeTo' . str_replace('.', '_', $ver);
 			if (version_compare($ver, $toVer, '<=') && version_compare($ver, $fromVer, '>')) {
 				$sqls = $this->getSchemaSQLs($ver, $prev);
+				$prev = $ver;
 				if ($sqls) {
 					$sr = ['{prefix}', '{encoding}'];
 					$rp = [$db->getDialect()->getTablePrefix(), $db->getDialect()->getCharset()];
@@ -157,12 +158,20 @@ abstract class CmfModule extends Module {
 		return true;
 	}
 
+	/**
+	 * 加载SQL语句
+	 *
+	 * @param string $toVer
+	 * @param string $fromVer
+	 *
+	 * @return array
+	 */
 	protected function getSchemaSQLs($toVer, $fromVer = '0.0.0') {
 		$sqls    = [];
 		$sqlFile = MODULES_PATH . $this->dirname . DS . 'schema.sql.php';
 		if (is_file($sqlFile)) {
 			$tables = [];
-			@include_once $sqlFile;
+			@include $sqlFile;
 			if (!empty ($tables)) {
 				foreach ($tables as $ver => $var) {
 					if ($var && version_compare($ver, $toVer, '<=') && version_compare($ver, $fromVer, '>')) {
