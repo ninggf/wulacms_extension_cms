@@ -36,15 +36,19 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 	}
 
 	public function loadConfig($name = 'default') {
-		//优化从文件加载
+		//优先从文件加载
 		$config = parent::loadConfig($name);
 		if (WULACMF_INSTALLED) {
 			//从缓存加载
 			$setting = RtCache::get('cfg.' . $name);
 			if ($setting === null) {
 				//从数据库加载
-				$setting = App::table('settings')->find(['group' => $name], 'name,value')->toArray('value', 'name');
-				RtCache::add('cfg.' . $name, $setting);
+				try {
+					$setting = App::table('settings')->find(['group' => $name], 'name,value')->toArray('value', 'name');
+					RtCache::add('cfg.' . $name, $setting);
+				} catch (\Exception $e) {
+					log_warn($e->getMessage());//无法连接数据库
+				}
 			}
 			if ($setting) {
 				$config->setConfigs($setting);
