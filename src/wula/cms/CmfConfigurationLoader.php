@@ -59,8 +59,8 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 	}
 
 	public function beforeLoad() {
-		CmsFeatureManager::register(new CacheFeature());
 		CmsFeatureManager::register(new LimitFeature());
+		CmsFeatureManager::register(new CacheFeature());
 		$features = CmsFeatureManager::getFeatures();
 		if ($features) {
 			ksort($features);
@@ -75,21 +75,6 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 
 			if ($rst && !array_product($rst)) {//有特性要求停止运行（返回了false）
 				Response::respond(403);
-			}
-		}
-	}
-
-	public function postLoad() {
-		CmsFeatureManager::register(new CacheFeature());
-		$features = CmsFeatureManager::getFeatures();
-		if ($features) {
-			ksort($features);
-			$url = Router::getFullURI();
-			foreach ($features as $fs) {
-				/**@var \wula\cms\ICmsFeature $f */
-				foreach ($fs as $f) {
-					$f->postPerform($url);
-				}
 			}
 		}
 	}

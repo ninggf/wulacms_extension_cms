@@ -11,6 +11,7 @@
 namespace wula\cms\feature;
 
 use wula\cms\ICmsFeature;
+use wulaphp\io\Request;
 
 /**
  * 防CC特性.
@@ -19,7 +20,7 @@ use wula\cms\ICmsFeature;
  */
 class LimitFeature implements ICmsFeature {
 	public function getPriority() {
-		return '5';
+		return 5;
 	}
 
 	public function getId() {
@@ -27,10 +28,8 @@ class LimitFeature implements ICmsFeature {
 	}
 
 	public function perform($url) {
-		//需要防CC
-	}
-
-	public function postPerform($url) {
+		//防CC,取IP
+		$ip = Request::getIp();
 
 	}
 }

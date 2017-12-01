@@ -15,11 +15,9 @@ namespace wula\cms;
  * @package wula\cms
  */
 interface ICmsFeature {
-	function getPriority();
+	public function getPriority();
 
-	function getId();
+	public function getId();
 
-	function perform($url);
-
-	function postPerform($url);
+	public function perform($url);
 }
