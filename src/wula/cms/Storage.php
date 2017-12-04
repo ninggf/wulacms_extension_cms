@@ -25,6 +25,8 @@ final class  Storage implements IStorage {
 	 * 创建一个存储器实例.
 	 *
 	 * @param string $ssn 类似PDO的DSN字符串
+	 *
+	 * @throws \Exception 当ssn格式错误时抛出
 	 */
 	public function __construct($ssn) {
 		$ssns = explode(':', $ssn, 2);
@@ -39,6 +41,8 @@ final class  Storage implements IStorage {
 		$driverClz = new $driverCls($ssns[1]);
 		if ($driverClz->initialize()) {
 			$this->driver = $driverClz;
+		} else {
+			log_warn('cannot initialize storage: ' . $ssn, 'storage');
 		}
 	}
 

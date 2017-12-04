@@ -18,7 +18,7 @@ use wulaphp\app\ModuleLoader;
 use wulaphp\cache\RtCache;
 
 class CmfModuleLoader extends ModuleLoader {
-	private $modules;
+	private $modules = [];
 
 	public function __construct() {
 		if (WULACMF_INSTALLED) {
@@ -64,7 +64,7 @@ class CmfModuleLoader extends ModuleLoader {
 			return false;
 		} else {
 			$name = $module->getNamespace();
-			if ($name == 'core') {
+			if ($name == 'system') {
 				return true;
 			}
 		}
