@@ -96,7 +96,7 @@ class InstallCommand extends ArtisanCommand {
 			$dbconfig         = file_get_contents($cfg);
 			$r['{dashboard}'] = $dashboard;
 			$r['{domain}']    = $domain;
-			$r['{name}']      = '';
+			$r["'{name}'"]    = null;
 			$this->log('  create config.php ...', false);
 			$dbconfig = str_replace(array_keys($r), array_values($r), $dbconfig);
 			if (!@file_put_contents(CONFIG_PATH . 'config.php', $dbconfig)) {
@@ -141,8 +141,8 @@ class InstallCommand extends ArtisanCommand {
 				return 1;
 			}
 		}
-		$dbconfig   = include CONFIG_PATH . 'dbconfig.php';
-		$siteConfig = include CONFIG_PATH . 'install_config.php';
+		$dbconfig   = @include CONFIG_PATH . 'dbconfig.php';
+		$siteConfig = @include CONFIG_PATH . 'install_config.php';
 		try {
 			// install modules
 			$this->log();
@@ -163,7 +163,8 @@ class InstallCommand extends ArtisanCommand {
 			if ($db == null) {
 				throw_exception('Cannot connect to the database');
 			}
-			$modules = ['backend', 'system', 'cms'];
+
+			$modules = ['system', 'backend', 'cms'];
 			if (isset($siteConfig['modules'])) {
 				$modules = array_merge($modules, (array)$siteConfig['modules']);
 			}
@@ -171,7 +172,7 @@ class InstallCommand extends ArtisanCommand {
 			foreach ($modules as $m) {
 				$this->log("  install " . $m . ' ... ', false);
 				$md = App::getModuleById($m);
-				if ($md) {
+				if ($md instanceof CmfModule) {
 					if ($md->install($db, true)) {
 						$this->log('  [' . $this->color->str('done', 'green') . ']');
 					} else {
