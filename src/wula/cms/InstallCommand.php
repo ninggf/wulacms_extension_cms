@@ -96,7 +96,7 @@ class InstallCommand extends ArtisanCommand {
 			$dbconfig         = file_get_contents($cfg);
 			$r['{dashboard}'] = $dashboard;
 			$r['{domain}']    = $domain;
-			$r["'{name}'"]    = null;
+			$r["'{name}'"]    = 'null';
 			$this->log('  create config.php ...', false);
 			$dbconfig = str_replace(array_keys($r), array_values($r), $dbconfig);
 			if (!@file_put_contents(CONFIG_PATH . 'config.php', $dbconfig)) {
