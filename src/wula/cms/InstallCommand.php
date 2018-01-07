@@ -164,7 +164,7 @@ class InstallCommand extends ArtisanCommand {
 				throw_exception('Cannot connect to the database');
 			}
 
-			$modules = ['system', 'backend', 'cms'];
+			$modules = ['system', 'backend'];
 			if (isset($siteConfig['modules'])) {
 				$modules = array_merge($modules, (array)$siteConfig['modules']);
 			}
