@@ -56,7 +56,7 @@ class InstallCommand extends ArtisanCommand {
 				break;
 			}
 		} while (true);
-
+		$dashboard = 'backend';
 		$dbname    = $this->get('dbname [wula]', 'wula');
 		$dbcharset = strtoupper($this->get('charset [utf8mb4]', 'utf8mb4'));
 		$dbuser    = $this->get('username [root]', 'root');
@@ -67,7 +67,6 @@ class InstallCommand extends ArtisanCommand {
 		$username  = $this->get('username [admin]', 'admin');
 		$password  = $this->get('password [random]', rand_str(15));
 		$domain    = $this->get('domain []', '');
-		$dashboard = $this->get('dashboard name [backend]', 'backend');
 
 		$this->log();
 		$this->log('setp 4: confirm');
@@ -81,7 +80,6 @@ class InstallCommand extends ArtisanCommand {
 		$this->log();
 		$this->log('admin and dashboard:');
 		$this->log("\tadmin    : " . $this->color->str($username, 'blue'));
-		$this->log("\tdashboard: " . $this->color->str($dashboard, 'blue'));
 		$this->log("\tdomain:" . $this->color->str($domain, 'blue'));
 		$this->log();
 		$confirm = strtoupper($this->get('is that correct? [Y/n]', 'Y'));
