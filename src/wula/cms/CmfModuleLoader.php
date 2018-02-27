@@ -46,9 +46,6 @@ class CmfModuleLoader extends ModuleLoader {
 	 */
 	public function isEnabled(Module $module) {
 		if (WULACMF_INSTALLED) {
-			if (!$module instanceof CmfModule) {
-				return false;
-			}
 			$name = $module->getNamespace();
 			if (isset($this->modules[ $name ])) {
 				$m                        = $this->modules[ $name ];
@@ -56,7 +53,7 @@ class CmfModuleLoader extends ModuleLoader {
 				$module->installedVersion = $m['version'];
 				$module->upgradable       = version_compare($module->getCurrentVersion(), $m['version'], '>');
 				$module->enabled          = $m['status'] == 1;
-				$module->isKernel         = $m['kernel'] == 1;
+				$module->isKernel         = $module->isKernel || $m['kernel'] == 1;
 
 				return $module->enabled;
 			}
