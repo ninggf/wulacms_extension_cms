@@ -56,6 +56,13 @@ class CmfModuleLoader extends ModuleLoader {
 				$module->isKernel         = $module->isKernel || $m['kernel'] == 1;
 
 				return $module->enabled;
+			} else if (!$module instanceof CmfModule) {
+				$module->installed        = true;
+				$module->enabled          = true;
+				$module->installedVersion = $module->getCurrentVersion();
+				$module->isKernel         = true;
+
+				return true;
 			}
 
 			return false;
