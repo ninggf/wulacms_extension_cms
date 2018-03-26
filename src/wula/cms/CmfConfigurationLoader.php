@@ -44,7 +44,7 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 			if ($setting === null) {
 				//从数据库加载
 				try {
-					$setting = App::table('settings')->find(['group' => $name], 'name,value')->toArray('value', 'name');
+					$setting = App::table('settings')->findAll(['group' => $name], 'name,value')->toArray('value', 'name');
 					RtCache::add('cfg.' . $name, $setting);
 				} catch (\Exception $e) {
 					log_warn($e->getMessage());//无法连接数据库
