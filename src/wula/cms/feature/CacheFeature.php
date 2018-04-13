@@ -94,7 +94,7 @@ class CacheFeature implements ICmsFeature {
 			} else {
 				//注册缓存内容处理器
 				$unlock = isset($wait);
-				bind('before_output_content', function ($content, View $view) use ($cid, $cacher, $unlock) {
+				bind('before_output_content', function ($content, View $view) use ($cid, $cacher, $unlock, $url) {
 					//需要缓存
 					if (defined('CACHE_EXPIRE') && CACHE_EXPIRE > 0) {
 						//插件或扩展可以将最后修改时间设为0来取消本次缓存.
@@ -105,7 +105,7 @@ class CacheFeature implements ICmsFeature {
 							$time == 0 ? time() : $time,// 最后修改时间
 							CACHE_EXPIRE//缓存时间
 						], CACHE_EXPIRE);
-
+						fire('on_page_cached', $cid, $url);
 						if ($time > 0) {
 							Response::cache(CACHE_EXPIRE, $time);
 						} else if ($time == 0) {

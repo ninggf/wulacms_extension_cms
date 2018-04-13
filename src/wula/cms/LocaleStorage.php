@@ -19,7 +19,7 @@ class LocaleStorage extends StorageDriver {
 			return false;
 		}
 		$ssn = str_replace('/', DS, $ssn);
-		if ($ssn{0} == '/') {
+		if ($ssn{0} == DS) {
 			$this->dir = $ssn;
 		} else {
 			$this->dir = APPROOT . $ssn . DS;
@@ -59,7 +59,7 @@ class LocaleStorage extends StorageDriver {
 	}
 
 	private function realname($filename) {
-		$fs = explode('/', $filename, 2);
+		$fs = explode('/', ltrim($filename, '/'), 2);
 		if (count($fs) == 2) {
 			$dir = $this->dir . $fs[0] . DS;
 		} else {
