@@ -35,6 +35,11 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 		}
 	}
 
+	/**
+	 * @param string $name
+	 *
+	 * @return mixed|\wulaphp\conf\Configuration
+	 */
 	public function loadConfig($name = 'default') {
 		//优先从文件加载
 		$config = parent::loadConfig($name);
@@ -58,9 +63,16 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 		return $config;
 	}
 
+	/**
+	 * 加载配置前运行CMS特性。
+	 */
 	public function beforeLoad() {
-		CmsFeatureManager::register(new LimitFeature());
-		CmsFeatureManager::register(new CacheFeature());
+		if (defined('ANTI_CC') && ANTI_CC) {
+			CmsFeatureManager::register(new LimitFeature());
+		}
+		if (APP_MODE == 'pro') {//只有线上才开启缓存功能
+			CmsFeatureManager::register(new CacheFeature());
+		}
 		$features = CmsFeatureManager::getFeatures();
 		if ($features) {
 			ksort($features);

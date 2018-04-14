@@ -47,7 +47,7 @@ class CacheFeature implements ICmsFeature {
 			}
 			//缓存命中
 			if ($page && is_array($page)) {
-				if (isset($wait) && defined('ANTI_AVALANCHE') && ANTI_AVALANCHE) {
+				if (isset($wait)) {
 					RedisLock::uunlock($cid);
 				}
 				if (@ob_get_status()) {
@@ -96,24 +96,27 @@ class CacheFeature implements ICmsFeature {
 				$unlock = isset($wait);
 				bind('before_output_content', function ($content, View $view) use ($cid, $cacher, $unlock, $url) {
 					//需要缓存
-					if (defined('CACHE_EXPIRE') && CACHE_EXPIRE > 0) {
-						//插件或扩展可以将最后修改时间设为0来取消本次缓存.
-						$time = apply_filter('alter_page_modified_time', time());
-						$cacher->add($cid, [
-							$content,//缓存内容
-							$view->getHeaders(),//原输出头
-							$time == 0 ? time() : $time,// 最后修改时间
-							CACHE_EXPIRE//缓存时间
-						], CACHE_EXPIRE);
-						fire('on_page_cached', $cid, $url);
-						if ($time > 0) {
-							Response::cache(CACHE_EXPIRE, $time);
-						} else if ($time == 0) {
-							Response::nocache();
+					try {
+						if (defined('CACHE_EXPIRE') && CACHE_EXPIRE > 0) {
+							//插件或扩展可以将最后修改时间设为0来取消本次缓存.
+							$time = apply_filter('alter_page_modified_time', time());
+							$cacher->add($cid, [
+								$content,//缓存内容
+								$view->getHeaders(),//原输出头
+								$time == 0 ? time() : $time,// 最后修改时间
+								CACHE_EXPIRE//缓存时间
+							], CACHE_EXPIRE);
+							fire('on_page_cached', $cid, $url);
+							if ($time > 0) {
+								Response::cache(CACHE_EXPIRE, $time);
+							} else if ($time == 0) {
+								Response::nocache();
+							}
 						}
-					}
+					} catch (\Exception $e) {
 
-					if ($unlock && defined('ANTI_AVALANCHE') && ANTI_AVALANCHE) {
+					}
+					if ($unlock) {
 						RedisLock::uunlock($cid);
 					}
 
