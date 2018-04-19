@@ -14,6 +14,7 @@ use wulaphp\app\App;
 use wulaphp\artisan\ArtisanCommand;
 use wulaphp\auth\Passport;
 use wulaphp\db\dialect\DatabaseDialect;
+use function GuzzleHttp\Psr7\parse_query;
 
 class InstallCommand extends ArtisanCommand {
 	private $welcomeShow = false;
@@ -27,6 +28,7 @@ class InstallCommand extends ArtisanCommand {
 	}
 
 	protected function execute($options) {
+		$params  = $this->opt();
 		$wulacms = $this->color->str('wulacms', 'red');
 		if (!$this->welcomeShow) {
 			define('SUPPORTPATH', dirname(dirname(dirname(__DIR__))) . DIRECTORY_SEPARATOR . 'tpl' . DS);
@@ -35,56 +37,94 @@ class InstallCommand extends ArtisanCommand {
 			$this->log();
 			$this->log($wulacms . ' version: ' . WULA_VERSION . ' - ' . WULA_RELEASE);
 			$this->log();
-			$this->log(wordwrap($wulacms . ' is an ' . $this->color->str('open source, free', 'green') . ' CMS platform based on wulaphp. Now please flow the below steps to install it for you.', 80));
+			$this->log(wordwrap($wulacms . ' is an ' . $this->color->str('open source, free', 'green') . ' CMS platform based on wulaphp.', 100));
 		}
-
-		$this->log();
-		$this->log('setp 1: environment');
-		$this->log('-----------------------------------------------');
-		$env = $this->get('environment [dev]', 'dev');
-
-		$this->log();
-		$this->log('setp 2: database');
-		$this->log('-----------------------------------------------');
-		$dbhost = $this->get('host [localhost]', 'localhost');
-
-		do {
-			$dbport = $this->get('port [3306]', '3306');
-			if (!preg_match('#^[1-9]\d{1,3}$#', $dbport)) {
-				$this->log("\t" . $this->color->str('invalid prot number', null, 'red'));
-			} else {
-				break;
-			}
-		} while (true);
 		$dashboard = 'backend';
-		$dbname    = $this->get('dbname [wula]', 'wula');
-		$dbcharset = strtoupper($this->get('charset [utf8mb4]', 'utf8mb4'));
-		$dbuser    = $this->get('username [root]', 'root');
-		$dbpwd     = $this->get('password');
-		$this->log();
-		$this->log('setp 3: site info');
-		$this->log('-----------------------------------------------');
-		$username  = $this->get('username [admin]', 'admin');
-		$password  = $this->get('password [random]', rand_str(15));
-		$domain    = $this->get('domain []', '');
+		$domain    = '';
+		if ($params) {
+			$opts = @parse_query($params);
+			if ($opts) {
+				$env       = aryget('env', $opts, 'dev');
+				$dbhost    = aryget('dbhost', $opts, 'localhost');
+				$dbport    = aryget('dbport', $opts, '3306');
+				$dbname    = aryget('dbname', $opts, 'wulacms');
+				$dbuser    = aryget('dbuser', $opts, 'root');
+				$dbpwd     = aryget('dbpwd', $opts, '');
+				$dbcharset = aryget('charset', $opts, 'UTF8');
+				$username  = aryget('username', $opts, 'admin');
+				$password  = rand_str(12);
 
-		$this->log();
-		$this->log('setp 4: confirm');
-		$this->log('-----------------------------------------------');
-		$this->log('environment: ' . $env);
-		$this->log('database info:');
-		$this->log("\tserver  : " . $this->color->str($dbhost . ':' . $dbport, 'blue'));
-		$this->log("\tdatabase: " . $this->color->str(str_pad($dbname, 20, ' ', STR_PAD_RIGHT), 'blue') . ' charset : ' . $this->color->str($dbcharset, 'blue'));
-		$this->log("\tusername: " . $this->color->str(str_pad($dbuser, 20, ' ', STR_PAD_RIGHT), 'blue') . ' password: ' . $this->color->str($dbpwd, 'blue'));
+				$this->log();
+				$this->log('install configuration:');
 
-		$this->log();
-		$this->log('admin and dashboard:');
-		$this->log("\tadmin    : " . $this->color->str($username, 'blue'));
-		$this->log("\tdomain:" . $this->color->str($domain, 'blue'));
-		$this->log();
-		$confirm = strtoupper($this->get('is that correct? [Y/n]', 'Y'));
-		if ($confirm !== 'Y') {
-			return $this->execute($options);
+				$this->log('environment: ' . $env);
+				$this->log('database info:');
+				$this->log("\tserver  : " . $this->color->str($dbhost . ':' . $dbport, 'blue'));
+				$this->log("\tdatabase: " . $this->color->str(str_pad($dbname, 20, ' ', STR_PAD_RIGHT), 'blue') . ' charset : ' . $this->color->str($dbcharset, 'blue'));
+				$this->log("\tusername: " . $this->color->str(str_pad($dbuser, 20, ' ', STR_PAD_RIGHT), 'blue') . ' password: ' . $this->color->str($dbpwd, 'blue'));
+
+				$this->log();
+				$this->log('admin and dashboard:');
+				$this->log("\tadmin    : " . $this->color->str($username, 'blue'));
+				$this->log("\tdomain:" . $this->color->str($domain, 'blue'));
+				$this->log();
+				$this->log('is that correct? [Y/n] Y');
+
+			} else {
+				echo 'cannot parse parameters';
+
+				return 1;
+			}
+		} else {
+			$this->log('Now please flow the below steps to install it for you.');
+			$this->log();
+			$this->log('setp 1: environment');
+			$this->log('-----------------------------------------------');
+			$env = $this->get('environment [dev]', 'dev');
+
+			$this->log();
+			$this->log('setp 2: database');
+			$this->log('-----------------------------------------------');
+			$dbhost = $this->get('host [localhost]', 'localhost');
+
+			do {
+				$dbport = $this->get('port [3306]', '3306');
+				if (!preg_match('#^[1-9]\d{1,3}$#', $dbport)) {
+					$this->log("\t" . $this->color->str('invalid prot number', null, 'red'));
+				} else {
+					break;
+				}
+			} while (true);
+
+			$dbname    = $this->get('dbname [wula]', 'wula');
+			$dbcharset = strtoupper($this->get('charset [utf8mb4]', 'utf8mb4'));
+			$dbuser    = $this->get('username [root]', 'root');
+			$dbpwd     = $this->get('password');
+			$this->log();
+			$this->log('setp 3: site info');
+			$this->log('-----------------------------------------------');
+			$username = $this->get('username [admin]', 'admin');
+			$password = $this->get('password [random]', rand_str(15));
+			$domain   = $this->get('domain []', '');
+
+			$this->log();
+			$this->log('setp 4: confirm');
+			$this->log('-----------------------------------------------');
+			$this->log('environment: ' . $env);
+			$this->log('database info:');
+			$this->log("\tserver  : " . $this->color->str($dbhost . ':' . $dbport, 'blue'));
+			$this->log("\tdatabase: " . $this->color->str(str_pad($dbname, 20, ' ', STR_PAD_RIGHT), 'blue') . ' charset : ' . $this->color->str($dbcharset, 'blue'));
+			$this->log("\tusername: " . $this->color->str(str_pad($dbuser, 20, ' ', STR_PAD_RIGHT), 'blue') . ' password: ' . $this->color->str($dbpwd, 'blue'));
+
+			$this->log();
+			$this->log('admin and dashboard:');
+			$this->log("\tadmin    : " . $this->color->str($username, 'blue'));
+			$this->log("\tdomain:" . $this->color->str($domain, 'blue'));
+			$this->log();
+			$confirm = strtoupper($this->get('is that correct? [Y/n]', 'Y'));
+			if ($confirm !== 'Y') {
+				return $this->execute($options);
+			}
 		}
 		// install database
 		$this->log();
@@ -195,14 +235,21 @@ class InstallCommand extends ArtisanCommand {
 		$user['username'] = $username;
 		$user['nickname'] = '网站所有者';
 		$user['hash']     = Passport::passwd($password);
+		try {
+			$db->insert($user)->into('user')->exec();
 
-		$db->insert($user)->into('user')->exec();
+			$db->insert([
+				['user_id' => 1, 'role_id' => 1],
+				['user_id' => 1, 'role_id' => 2]
+			], true)->into('{user_role}')->exec();
+		} catch (\Exception $e) {
+			$this->log($e->getMessage());
+			@unlink(CONFIG_PATH . '.env');
+			@unlink(CONFIG_PATH . 'config.php');
+			@unlink(CONFIG_PATH . 'dbconfig.php');
 
-		$db->insert([
-			['user_id' => 1, 'role_id' => 1],
-			['user_id' => 1, 'role_id' => 2]
-		], true)->into('{user_role}')->exec();
-
+			return 1;
+		}
 		$this->log('  [' . $this->color->str('done', 'green') . ']');
 		// done
 		file_put_contents(CONFIG_PATH . 'install.lock', time());
