@@ -31,11 +31,10 @@ class CacheFeature implements ICmsFeature {
 
 	public function perform($url) {
 		if (APP_MODE == 'pro') {//只有线上才开启缓存功能
-			defined('PAGE_CACHE_PREFIX') or define('PAGE_CACHE_PREFIX', md5(WEB_ROOT));
 			$cacher = Cache::getCache();
 			$domain = $_SERVER ['HTTP_HOST'];
 			$qstr   = get_query_string();//参数
-			$cid    = md5(PAGE_CACHE_PREFIX . $domain . $url . $qstr);
+			$cid    = md5($domain . $url . $qstr);
 			$page   = $cacher->get($cid);
 			//防雪崩机制: 加锁读缓存
 			if (!$page && defined('ANTI_AVALANCHE') && ANTI_AVALANCHE) {
