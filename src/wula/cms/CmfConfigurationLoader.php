@@ -15,7 +15,6 @@ use wula\cms\feature\LimitFeature;
 use wulaphp\app\App;
 use wulaphp\cache\RtCache;
 use wulaphp\conf\ConfigurationLoader;
-use wulaphp\io\Response;
 use wulaphp\router\Router;
 
 class CmfConfigurationLoader extends ConfigurationLoader {
@@ -86,7 +85,8 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 			}
 
 			if ($rst && !array_product($rst)) {//有特性要求停止运行（返回了false）
-				Response::respond(403);
+				status_header(403);
+				exit();
 			}
 		}
 	}
