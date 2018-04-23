@@ -51,11 +51,11 @@ class LocaleStorage extends StorageDriver {
 
 	public function delete($filename) {
 		$rfn = $this->realname($filename);
-		if ($rfn) {
-			@unlink($rfn);
+		if ($rfn && is_file($rfn)) {
+			return @unlink($rfn);
 		}
 
-		return false;
+		return true;
 	}
 
 	private function realname($filename) {
