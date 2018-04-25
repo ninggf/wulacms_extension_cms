@@ -25,7 +25,7 @@ wulacms的支持库，提供配置加载、命令行安装，命令行管理模�
 ## 缓存支持
 1. 在`bootstrap.php`文件中将`APP_MODE`设为`pro`。
 2. 修改`conf/cache_config.php`配置缓存服务器。
-3. 在输出页面内容前定义`EXPIRE`常量值为缓存时间即可(单位秒)。
+3. 在输出页面内容前定义`CACHE_EXPIRE`常量值为缓存时间即可(单位秒)。
 
 ### 防雪崩机制
 在`bootstrap.php`文件中将`ANTI_AVALANCHE`设为`true`即可开启（需要redis支持）。

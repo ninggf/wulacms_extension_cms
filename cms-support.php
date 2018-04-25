@@ -9,3 +9,4 @@
  */
 
 \wula\cms\Storage::registerDriver('file', '\wula\cms\LocaleStorage');
+\wula\cms\Storage::registerDriver('ssdb', '\wula\cms\SSDBStorageDriver');

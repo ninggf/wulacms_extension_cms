@@ -34,7 +34,7 @@ final class  Storage implements IStorage {
 			throw_exception($ssn . ' is not valid');
 		}
 		if (!isset(self::$IMPLS[ $ssns[0] ])) {
-			throw_exception($ssns . ' is not valid storage driver');
+			throw_exception($ssns[0] . ' is not valid storage driver');
 		}
 		$driverCls = self::$IMPLS[ $ssns[0] ];
 		/**@var \wula\cms\StorageDriver $driverClz */
