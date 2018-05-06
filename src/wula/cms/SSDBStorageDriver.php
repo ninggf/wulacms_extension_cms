@@ -19,6 +19,10 @@ class SSDBStorageDriver extends StorageDriver {
 	 */
 	private $ssdb;
 
+	/**
+	 * @return bool
+	 * @throws \wula\cms\third\SSDBException
+	 */
 	public function initialize() {
 		list($host, $port, $timeout) = get_for_list($this->options, 'host', 'port', 'timeout');
 		if (!$host) {
@@ -31,9 +35,7 @@ class SSDBStorageDriver extends StorageDriver {
 			try {
 				$this->ssdb = new SimpleSSDB($host, $port, $timeout ? $timeout * 1000 : 2000);
 			} catch (SSDBException $e) {
-				log_error($e->getMessage(), 'ssdb');
-
-				return false;
+				throw $e;
 			}
 
 			return true;

@@ -42,7 +42,7 @@ final class  Storage implements IStorage {
 		if ($driverClz->initialize()) {
 			$this->driver = $driverClz;
 		} else {
-			log_warn('cannot initialize storage: ' . $ssn, 'storage');
+			throw_exception('cannot initialize storage: ' . $ssn);
 		}
 	}
 
