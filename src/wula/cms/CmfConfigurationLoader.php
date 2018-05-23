@@ -15,6 +15,7 @@ use wula\cms\feature\LimitFeature;
 use wulaphp\app\App;
 use wulaphp\cache\RtCache;
 use wulaphp\conf\ConfigurationLoader;
+use wulaphp\io\Request;
 use wulaphp\router\Router;
 
 class CmfConfigurationLoader extends ConfigurationLoader {
@@ -89,5 +90,33 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 				exit();
 			}
 		}
+	}
+
+	public function postLoad() {
+		if (App::bcfg('offline')) {
+			$ips = trim(App::cfg('allowedIp'));
+			$msg = App::cfg('offlineMsg', 'Service Unavailable');
+			if (empty($ips)) {
+				$this->httpout(503, $msg);
+			}
+			$ips = explode("\n", $ips);
+			if (!in_array(Request::getIp(), $ips)) {
+				$this->httpout(503, $msg);
+			}
+		}
+	}
+
+	/**
+	 * 输出http响应输出。
+	 *
+	 * @param string|int $status 状态
+	 * @param string     $message
+	 */
+	private function httpout($status, $message = '') {
+		status_header($status);
+		if ($message) {
+			echo $message;
+		}
+		exit();
 	}
 }
