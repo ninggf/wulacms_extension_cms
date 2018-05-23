@@ -93,14 +93,15 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 	}
 
 	public function postLoad() {
-		if (App::bcfg('offline')) {
+		$ip = Request::getIp();
+		if ($ip && App::bcfg('offline')) {
 			$ips = trim(App::cfg('allowedIps'));
 			$msg = App::cfg('offlineMsg', 'Service Unavailable');
 			if (empty($ips)) {
 				$this->httpout(503, $msg);
 			}
 			$ips = explode("\n", $ips);
-			if (!in_array(Request::getIp(), $ips)) {
+			if (!in_array($ip, $ips)) {
 				$this->httpout(503, $msg);
 			}
 		}
