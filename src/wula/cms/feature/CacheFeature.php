@@ -58,7 +58,7 @@ class CacheFeature implements ICmsFeature {
 					if (!$gzip) {
 						@ini_set('zlib.output_compression', 1);
 					}
-					@ini_set('zlib.output_compression_level', 9);
+					@ini_set('zlib.output_compression_level', 5);
 				} else {
 					@ini_set('zlib.output_compression', 0);
 					@ini_set('zlib.output_compression_level', -1);
@@ -66,10 +66,7 @@ class CacheFeature implements ICmsFeature {
 				$page = apply_filter('alter_page_cache', $page);
 				@list($content, $headers, $time, $expire) = $page;
 				if (isset ($_SERVER ['HTTP_IF_MODIFIED_SINCE']) && strtotime($_SERVER ['HTTP_IF_MODIFIED_SINCE']) === $time) {
-					$protocol = $_SERVER ["SERVER_PROTOCOL"];
-					if ('HTTP/1.1' != $protocol && 'HTTP/1.0' != $protocol) {
-						$protocol = 'HTTP/1.0';
-					}
+					$protocol      = $_SERVER ["SERVER_PROTOCOL"];
 					$status_header = "$protocol 304 Not Modified";
 					Response::cache($expire, $time);
 					@header($status_header, true, 304);
