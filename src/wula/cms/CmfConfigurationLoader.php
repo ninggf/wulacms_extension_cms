@@ -46,7 +46,7 @@ class CmfConfigurationLoader extends ConfigurationLoader {
 		if (WULACMF_INSTALLED) {
 			//从缓存加载
 			$setting = RtCache::get('cfg.' . $name);
-			if ($setting === null) {
+			if (!is_array($setting)) {
 				//从数据库加载
 				try {
 					$setting = App::table('settings')->findAll(['group' => $name], 'name,value')->toArray('value', 'name');
