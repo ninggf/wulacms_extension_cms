@@ -44,7 +44,7 @@ class CmfConfigurationLoader extends ConfigurationLoader {
         //优先从文件加载
         $config = parent::loadConfig($name);
         if (WULACMF_INSTALLED) {
-            if ($name = 'default' && !defined('DEBUG')) {
+            if ($name == 'default' && !defined('DEBUG')) {
                 $debug = $config->get('debug', DEBUG_ERROR);
                 if ($debug > 1000 || $debug < 0) {
                     $debug = DEBUG_OFF;
