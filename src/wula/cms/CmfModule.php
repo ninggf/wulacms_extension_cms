@@ -25,7 +25,7 @@ abstract class CmfModule extends Module {
 	 *
 	 * @return bool
 	 */
-	public final function install(DatabaseConnection $con, $kernel = 0) {
+	public final function install($con, $kernel = 0) {
 		if ($con->select('id')->from('{module}')->where(['name' => $this->namespace])->exist('id')) {
 			return true;
 		}
