@@ -1,31 +1,28 @@
 {
-  "name": "wula/cms-support",
-  "description": "CMS功能支持类库",
-  "require": {
-	"wula/wulaphp": "*"
-  },
-  "license": "MIT",
-  "authors": [
-	{
-	  "name": "Leo Ning",
-	  "email": "windywany@gmail.com"
-	}
-  ],
-  "extra": {
-	"branch-alias": {
-	  "dev-master": "1.0-dev"
-	}
-  },
-  "autoload": {
-	"psr-0": {
-	  "wula\\cms\\": "src/"
-	},
-	"files": [
-	  "cms-support.php"
-	]
-  },
-  "support": {
-	"issues": "https://github.com/ninggf/wulacms_extension_cms/issues"
-  },
-  "homepage": "https://www.wulacms.com/extensions/cms"
+    "name": "wula/cms-support",
+    "description": "CMS功能支持类库",
+    "require": {
+        "wula/wulaphp": ">=2.5"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Leo Ning",
+            "email": "windywany@gmail.com"
+        }
+    ],
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    },
+    "autoload": {
+        "psr-0": {
+            "wula\\cms\\": "src/"
+        }
+    },
+    "support": {
+        "issues": "https://github.com/ninggf/wulacms_extension_cms/issues"
+    },
+    "homepage": "https://www.wulacms.com/extensions/cms"
 }
