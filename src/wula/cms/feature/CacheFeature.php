@@ -32,9 +32,8 @@ class CacheFeature implements ICmsFeature {
     public function perform($url) {
         if (APP_MODE == 'pro') {//只有线上才开启缓存功能
             $cacher = Cache::getCache();
-            $domain = $_SERVER ['HTTP_HOST'];
             $qstr   = get_query_string();//参数
-            $cid    = md5($domain . $url . $qstr);
+            $cid    = md5($url . $qstr);
             $page   = $cacher->get($cid);
             //防雪崩机制: 加锁读缓存
             if (!$page && defined('ANTI_AVALANCHE') && ANTI_AVALANCHE) {
@@ -49,6 +48,7 @@ class CacheFeature implements ICmsFeature {
                 if (isset($wait)) {
                     RedisLock::uunlock($cid);
                 }
+                @header_remove('X-Powered-By');
                 $page = apply_filter('alter_page_cache', $page);
                 @list($content, $headers, $time, $expire) = $page;
                 if (isset ($_SERVER ['HTTP_IF_MODIFIED_SINCE']) && strtotime($_SERVER ['HTTP_IF_MODIFIED_SINCE']) === $time) {
@@ -59,7 +59,7 @@ class CacheFeature implements ICmsFeature {
                 } else {
                     if ($headers) {
                         foreach ($headers as $h => $v) {
-                            @header($h . ': ', $v);
+                            @header($h . ': ' . $v);
                         }
                     }
                     if ($time !== 0) {
@@ -80,7 +80,6 @@ class CacheFeature implements ICmsFeature {
                             //插件或扩展可以将最后修改时间设为0来取消本次缓存.
                             $time    = apply_filter('alter_page_modified_time', time());
                             $headers = $view->getHeaders();//原输出头
-                            //$headers['ETag'] = $cid;
                             $cacher->add($cid, [
                                 $content,//缓存内容
                                 $headers,
@@ -92,7 +91,7 @@ class CacheFeature implements ICmsFeature {
                             } catch (\Exception $ee) {
                             }
                             if ($time > 0) {
-                                Response::cache(CACHE_EXPIRE, $time);
+                                Response::lastModified($time);
                             } else if ($time == 0) {
                                 Response::nocache();
                             }

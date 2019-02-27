@@ -74,27 +74,29 @@ class CmfConfigurationLoader extends ConfigurationLoader {
      * 加载配置前运行CMS特性。
      */
     public function beforeLoad() {
-        if (defined('ANTI_CC') && ANTI_CC) {
-            CmsFeatureManager::register(new LimitFeature());
-        }
-        if (APP_MODE == 'pro') {//只有线上才开启缓存功能
-            CmsFeatureManager::register(new CacheFeature());
-        }
-        $features = CmsFeatureManager::getFeatures();
-        if ($features) {
-            ksort($features);
-            $rst = [];
-            $url = Router::getFullURI();
-            foreach ($features as $fs) {
-                /**@var \wula\cms\ICmsFeature $f */
-                foreach ($fs as $f) {
-                    $rst[] = $f->perform($url) === false ? 0 : 1;
-                }
+        if (PHP_SAPI != 'cli') {
+            if (defined('ANTI_CC') && ANTI_CC) {
+                CmsFeatureManager::register(new LimitFeature());
             }
+            if (APP_MODE == 'pro') {//只有线上才开启缓存功能
+                CmsFeatureManager::register(new CacheFeature());
+            }
+            $features = CmsFeatureManager::getFeatures();
+            if ($features) {
+                ksort($features);
+                $rst = [];
+                $url = Router::getFullURI();
+                foreach ($features as $fs) {
+                    /**@var \wula\cms\ICmsFeature $f */
+                    foreach ($fs as $f) {
+                        $rst[] = $f->perform($url) === false ? 0 : 1;
+                    }
+                }
 
-            if ($rst && !array_product($rst)) {//有特性要求停止运行（返回了false）
-                status_header(403);
-                exit();
+                if ($rst && !array_product($rst)) {//有特性要求停止运行（返回了false）
+                    http_response_code(403);
+                    exit();
+                }
             }
         }
     }
@@ -121,7 +123,7 @@ class CmfConfigurationLoader extends ConfigurationLoader {
      * @param string     $message
      */
     private function httpout($status, $message = '') {
-        status_header($status);
+        http_response_code($status);
         if ($message) {
             echo $message;
         }
