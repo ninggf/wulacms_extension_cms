@@ -10,7 +10,6 @@
 
 namespace wula\cms;
 
-use wula\cms\feature\CacheFeature;
 use wula\cms\feature\LimitFeature;
 use wulaphp\app\App;
 use wulaphp\cache\RtCache;
@@ -76,10 +75,15 @@ class CmfConfigurationLoader extends ConfigurationLoader {
     public function beforeLoad() {
         if (PHP_SAPI != 'cli') {
             if (defined('ANTI_CC') && ANTI_CC) {
-                CmsFeatureManager::register(new LimitFeature());
-            }
-            if (APP_MODE == 'pro') {//只有线上才开启缓存功能
-                CmsFeatureManager::register(new CacheFeature());
+                $arg    = explode('/', ANTI_CC);
+                $arg[0] = intval($arg[0]);
+                if ($arg[0]) {//0就是关闭喽
+                    if (!isset($arg[1])) {
+                        $arg[1] = 60;
+                    }
+                    $arg[1] = intval($arg[1]);
+                    CmsFeatureManager::register(new LimitFeature($arg[0], $arg[1]));
+                }
             }
             $features = CmsFeatureManager::getFeatures();
             if ($features) {
@@ -90,20 +94,22 @@ class CmfConfigurationLoader extends ConfigurationLoader {
                     /**@var \wula\cms\ICmsFeature $f */
                     foreach ($fs as $f) {
                         $rst[] = $f->perform($url) === false ? 0 : 1;
+                        if (!array_product($rst)) {//有特性要求停止运行（返回了false）
+                            http_response_code(403);
+                            exit();
+                        }
                     }
-                }
-
-                if ($rst && !array_product($rst)) {//有特性要求停止运行（返回了false）
-                    http_response_code(403);
-                    exit();
                 }
             }
         }
     }
 
     public function postLoad() {
-        $ip = Request::getIp();
-        if ($ip && App::bcfg('offline')) {
+        if (App::bcfg('offline')) {
+            $ip = Request::getIp();
+            if (!$ip) {
+                return;
+            }
             $ips = trim(App::cfg('allowedIps'));
             $msg = App::cfg('offlineMsg', 'Service Unavailable');
             if (empty($ips)) {
