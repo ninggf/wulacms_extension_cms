@@ -58,7 +58,7 @@ class LimitFeature implements ICmsFeature {
         $cnf       = [
             $cfg->get('host'),
             $cfg->geti('port'),
-            $cfg->geti('timeout', 5),
+            $cfg->geti('timeout', 3),
             $cfg->get('auth'),
             $cfg->geti('db', 0)
         ];

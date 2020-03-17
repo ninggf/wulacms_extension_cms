@@ -24,13 +24,6 @@ class CmfConfigurationLoader extends ConfigurationLoader {
             define('WULACMF_INSTALLED', true);
         } else {
             define('WULACMF_INSTALLED', false);
-            if (!defined('WULACMF_WEB_INSTALLER')) {
-                bind('artisan\getCommands', function ($cmds) {
-                    $cmds['wulacms:install'] = new InstallCommand();
-
-                    return $cmds;
-                });
-            }
         }
     }
 
