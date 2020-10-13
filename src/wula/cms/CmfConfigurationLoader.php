@@ -20,7 +20,9 @@ use wulaphp\router\Router;
 class CmfConfigurationLoader extends ConfigurationLoader {
     public function __construct() {
         //检测是否安装.
-        if (is_file(CONFIG_PATH . 'install.lock')) {
+        if (APP_MODE == 'test' && is_file(CONFIG_PATH . 'install_test.lock')) {
+            define('WULACMF_INSTALLED', true);
+        } else if (is_file(CONFIG_PATH . 'install.lock')) {
             define('WULACMF_INSTALLED', true);
         } else {
             define('WULACMF_INSTALLED', false);
